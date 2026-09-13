@@ -1,9 +1,0 @@
-{
-  "name": "hard — two tasks in one sentence (must split)",
-  "meeting_date": "2026-03-02",
-  "transcript": "Ana: Quick one — Ben, can you patch the login bug and also bump the Node version before the release?\nBen: Yep, I'll handle both.",
-  "expected": {
-    "count": 2,
-    "owners": ["Ben", "Ben"]
-  }
-}

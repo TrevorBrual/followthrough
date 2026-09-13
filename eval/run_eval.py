@@ -1,65 +1,99 @@
-"""Eval harness: run every case through the extractor and print a pass rate.
+#!/usr/bin/env python3
+"""
+Meeting-to-Action reliability evaluation runner.
 
-Owner: Reliability lead. Add cases as JSON files in eval/cases/ — each needs a
-transcript and an expected {count, owners}. Target is 8-12 cases including the
-hard ones (no action items, ambiguous owner, two tasks in one sentence).
+Usage:
+    python3 eval/run_eval.py
 
-Run with `python -m eval.run_eval`. Forces DRY_RUN so no app is ever touched.
+Loads eval/cases.json, runs each transcript through the pluggable extractor
+(eval/extractor_adapter.py -- real extractor if plugged in, otherwise the
+mock stub), scores the result against the known-correct answer key, and
+prints a terminal reliability report.
 """
 
+from __future__ import annotations
+
 import json
-import os
-import pathlib
 import sys
-from collections import Counter
+from pathlib import Path
 
-os.environ["DRY_RUN"] = "true"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.extract import extract  # noqa: E402  (must follow the DRY_RUN guard)
+from eval.evaluator import CaseResult, FieldTally, evaluate_case
+from eval.extractor_adapter import run_extractor
 
-CASES_DIR = pathlib.Path(__file__).parent / "cases"
+CASES_PATH = Path(__file__).resolve().parent / "cases.json"
 
 
-def check(case: dict) -> tuple[bool, str]:
-    """Compare extracted items against the answer key. Returns (passed, detail)."""
-    items = extract(case["transcript"], case.get("meeting_date"))
-    expected = case["expected"]
+def load_cases() -> dict:
+    with open(CASES_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-    got_count = len(items)
-    if got_count != expected["count"]:
-        return False, f"expected {expected['count']} item(s), got {got_count}"
 
-    got_owners = Counter(item["owner"] for item in items)
-    want_owners = Counter(expected["owners"])
-    if got_owners != want_owners:
-        return False, f"owners {sorted(got_owners.elements())} != {sorted(want_owners.elements())}"
+def mark(ok: bool) -> str:
+    return "✓" if ok else "✗"
 
-    return True, ""
+
+def print_report(results: list[CaseResult]) -> None:
+    header = f"{'Case':<28} {'Count':^7} {'Owner':^7} {'Due Date':^9} {'Task':^6} {'Result':<6}"
+    print("Meeting-to-Action Reliability Evaluation\n")
+    print(header)
+    print("-" * len(header))
+
+    for r in results:
+        print(
+            f"{r.case_id:<28} {mark(r.count_ok):^7} {mark(r.owner_ok):^7} "
+            f"{mark(r.due_ok):^9} {mark(r.task_ok):^6} {'PASS' if r.passed else 'FAIL':<6}"
+        )
+
+    total = len(results)
+    passed = sum(1 for r in results if r.passed)
+    pass_rate = (passed / total * 100) if total else 0.0
+
+    task_tally, owner_tally, due_tally, priority_tally = FieldTally(), FieldTally(), FieldTally(), FieldTally()
+    for r in results:
+        for item in r.item_scores:
+            task_tally.record(item.task_ok)
+            owner_tally.record(item.owner_ok)
+            due_tally.record(item.due_ok)
+            if item.priority_ok is not None:
+                priority_tally.record(item.priority_ok)
+
+    print(f"\nOverall: {passed}/{total} passed")
+    print(f"Pass rate: {pass_rate:.1f}%\n")
+
+    def pct(tally: FieldTally) -> str:
+        return f"{(tally.correct / tally.total * 100):.0f}%" if tally.total else "n/a"
+
+    print(f"Task accuracy: {pct(task_tally)}")
+    print(f"Owner accuracy: {pct(owner_tally)}")
+    print(f"Due-date accuracy: {pct(due_tally)}")
+    print(f"Priority accuracy: {pct(priority_tally)}")
+
+    failures = [r for r in results if not r.passed]
+    if failures:
+        print("\nFailures:")
+        for r in failures:
+            print(f"\nFAIL: {r.case_id}")
+            for reason in r.reasons:
+                print(f"  - {reason}")
 
 
 def main() -> int:
-    cases = sorted(CASES_DIR.glob("*.json"))
-    if not cases:
-        print(f"No cases found in {CASES_DIR}")
-        return 1
+    data = load_cases()
+    default_reference_date = data.get("reference_date")
+    cases = data["cases"]
 
-    passed = 0
-    for path in cases:
-        case = json.loads(path.read_text())
-        try:
-            ok, detail = check(case)
-        except Exception as exc:
-            ok, detail = False, f"error: {exc}"
+    results = []
+    for case in cases:
+        reference_date = case.get("reference_date", default_reference_date)
+        actual = run_extractor(case["transcript"], reference_date=reference_date)
+        results.append(evaluate_case(case, actual))
 
-        passed += ok
-        print(f"{'PASS' if ok else 'FAIL'}  {case['name']}")
-        if not ok:
-            print(f"      {detail}")
+    print_report(results)
 
-    rate = passed / len(cases) * 100
-    print(f"\n{passed}/{len(cases)} passed ({rate:.0f}%)")
-    return 0 if passed == len(cases) else 1
+    return 0 if all(r.passed for r in results) else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
