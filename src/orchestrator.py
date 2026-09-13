@@ -17,7 +17,21 @@ from .extract import SAMPLE_TRANSCRIPT, extract
 def run(transcript: str) -> dict:
     print(f"Mode: {'DRY RUN' if dry_run() else 'LIVE'}\n")
 
-    items = extract(transcript)
+    # Guarded because this is the one call that can take the whole run down:
+    # no key, no network, API having a bad day. A traceback on screen is a
+    # worse answer than saying what failed and that nothing was written.
+    try:
+        items = extract(transcript)
+    except Exception as exc:
+        print(f"Extraction failed: {type(exc).__name__}: {exc}")
+        print("Nothing was written to any app.")
+        return {
+            "items": [],
+            "created": [],
+            "dropped": [],
+            "failures": [{"stage": "extract", "task": None, "error": str(exc)}],
+        }
+
     print(f"Extracted {len(items)} action item(s).\n")
 
     created, dropped, failures = [], [], []
