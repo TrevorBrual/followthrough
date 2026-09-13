@@ -48,7 +48,12 @@ Rules:
   meeting contains no action items, return an empty list. Never invent a task
   to fill the list.
 - Discussion, opinions, status updates, and decisions without follow-up work
-  are NOT action items.
+  are NOT action items. Neither are speculative ideas — "maybe we could look
+  into X", "something to think about" — where nobody decided X should happen.
+- A task the meeting treats as needing to be done still counts even if nobody
+  put their name on it: "someone needs to renew the cert", "the server has to
+  be restarted". Emit it with owner null. The test is whether the work was
+  agreed to be necessary, not whether it was assigned.
 - If one sentence contains two distinct commitments, emit two separate items.
 - owner: the person who took the task on, written as the name used in the
   transcript. If ownership is genuinely ambiguous or nobody claimed it, return
@@ -58,11 +63,16 @@ Rules:
 - task: a short imperative phrase without the owner's name — "fix the login
   bug", not "Sarah will fix the login bug". Leave out deadline and urgency
   wording; those belong in due_date and priority.
-- due_date: resolve relative dates ("next Friday", "end of the month") against
-  the meeting date given in the user message, and return ISO YYYY-MM-DD. If no
-  deadline was stated, return null. Do not invent deadlines.
-- priority: "high" when the transcript signals urgency or a blocker, "low" for
-  explicitly optional or nice-to-have work, otherwise "medium".
+- due_date: only when the transcript names a day or a date. Resolve relative
+  ones ("next Friday", "tomorrow", "end of the month") against the meeting date
+  given in the user message and return ISO YYYY-MM-DD. Otherwise null.
+- Urgency is not a deadline. "ASAP", "urgent", "right away", "this can't wait"
+  say how important the task is, not when it's due — they set priority and
+  leave due_date null. Never turn one into a date.
+- priority: "high" only when the transcript explicitly marks the task as urgent,
+  critical, or blocking ("urgent", "ASAP", "this is blocking us"). A task that
+  merely sounds important is "medium". "low" is for explicitly optional or
+  nice-to-have work. Default to "medium".
 """
 
 
