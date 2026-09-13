@@ -7,6 +7,8 @@ requests.request.
     python -m unittest discover -s tests -v
 """
 
+import contextlib
+import io
 import os
 import sys
 import pathlib
@@ -15,6 +17,7 @@ from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
+from src import orchestrator  # noqa: E402
 from src.connectors import _common, github, notion, slack  # noqa: E402
 
 FULL = {
@@ -105,6 +108,34 @@ class SlackRecap(unittest.TestCase):
 
     def test_bare_item_renders_without_none(self):
         self.assertNotIn("None", slack._format([BARE]))
+
+    def test_all_writes_failed_is_not_reported_as_an_empty_meeting(self):
+        # The bug: items were found, every write failed, and the recap said
+        # the meeting had nothing in it.
+        text = slack._format([], failed=3)
+        self.assertNotIn("no action items found", text)
+        self.assertIn("none could be saved", text)
+        self.assertIn("3 item(s) failed", text)
+
+    def test_partial_failure_lists_what_saved_and_counts_what_did_not(self):
+        text = slack._format([FULL], failed=2)
+        self.assertIn("1 action item(s) created", text)
+        self.assertEqual(text.count("•"), 1)
+        self.assertIn("2 item(s) failed", text)
+
+
+class OrchestratorRecap(unittest.TestCase):
+    """The original bug lived in the orchestrator, not the formatter: it
+    passed only the created items to the recap, so failures vanished. This
+    pins the call site, where a revert would otherwise pass every test above."""
+
+    def test_recap_is_told_how_many_items_failed_to_save(self):
+        items = [FULL, BARE, dict(FULL, task="update the changelog")]
+        with mock.patch.object(orchestrator, "extract", return_value=items),              mock.patch.object(orchestrator, "add_task", side_effect=RuntimeError("token expired")),              mock.patch.object(orchestrator, "create_issue", return_value={"ok": True}),              mock.patch.object(orchestrator, "post_recap") as recap,              contextlib.redirect_stdout(io.StringIO()):
+            result = orchestrator.run("transcript")
+
+        recap.assert_called_once_with([], failed=3)
+        self.assertEqual(len(result["dropped"]), 3)
 
 
 class RetryPolicy(unittest.TestCase):
