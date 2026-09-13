@@ -1,0 +1,9 @@
+{
+  "name": "hard — ambiguous owner (expect Unassigned)",
+  "meeting_date": "2026-03-02",
+  "transcript": "Ana: Someone needs to renew the TLS cert before it expires.\nBen: Right, that's coming up.\nAna: Let's make sure it gets done.\nBen: Agreed.",
+  "expected": {
+    "count": 1,
+    "owners": ["Unassigned"]
+  }
+}
