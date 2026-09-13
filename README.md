@@ -42,16 +42,24 @@ transcript ──► LLM extraction ──► JSON [{task, owner, due_date, prio
 ## Run
 
 ```
-python src/orchestrator.py
+python -m src.orchestrator              # uses the built-in sample transcript
+cat meeting.txt | python -m src.orchestrator
+```
+
+Extraction alone, to check the JSON in isolation:
+
+```
+python -m src.extract
 ```
 
 ## Reliability
 
 ```
-python eval/run_eval.py
+python -m eval.run_eval
 ```
 
-Runs the extractor against `eval/transcripts/*` and compares against the answer
-keys, printing a pass rate.
+Runs every case in `eval/cases/*.json` through the extractor and compares the
+item count and owners against the answer key, printing a pass rate. The harness
+forces `DRY_RUN`, so evaluating never touches a real app.
 
 <!-- Pass rate: fill in after the eval harness is populated -->

@@ -1,0 +1,9 @@
+{
+  "name": "basic — two clear owners",
+  "meeting_date": "2026-03-02",
+  "transcript": "Ana: The onboarding emails are still going to spam.\nBen: I'll fix the SPF record today.\nAna: Thanks. I'll write up the postmortem by Friday.\nBen: Sounds good.",
+  "expected": {
+    "count": 2,
+    "owners": ["Ben", "Ana"]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "hard — zero action items (must not hallucinate)",
+  "meeting_date": "2026-03-02",
+  "transcript": "Ana: Numbers look good this week, signups are up about 8%.\nBen: Nice. Churn is flat.\nAna: Agreed, nothing alarming. Let's keep watching it.\nBen: Yep. That's all I had.",
+  "expected": {
+    "count": 0,
+    "owners": []
+  }
+}
