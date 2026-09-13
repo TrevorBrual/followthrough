@@ -2,13 +2,13 @@
 
 import os
 
-from ._common import dry_run, request_with_retry
+from ._common import dry_run, owner_label, request_with_retry
 
 
 def _body(item: dict) -> str:
     due = item.get("due_date") or "no deadline set"
     return (
-        f"**Owner:** {item['owner']}\n"
+        f"**Owner:** {owner_label(item)}\n"
         f"**Due:** {due}\n"
         f"**Priority:** {item['priority']}\n\n"
         "_Opened automatically from a meeting transcript by followthrough._"

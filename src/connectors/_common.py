@@ -9,6 +9,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def owner_label(item: dict) -> str:
+    """Display name for an owner. The extractor returns None when nobody
+    claimed the task; only the apps need a human-readable stand-in."""
+    return item.get("owner") or "Unassigned"
+
+
 def dry_run() -> bool:
     """Read DRY_RUN at call time so tests and the eval harness can flip it."""
     return os.getenv("DRY_RUN", "true").lower() in ("1", "true", "yes")

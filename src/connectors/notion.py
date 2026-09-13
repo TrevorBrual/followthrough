@@ -6,7 +6,7 @@ Due (date), Priority (select). Adjust PROPERTIES if your database differs.
 
 import os
 
-from ._common import dry_run, request_with_retry
+from ._common import dry_run, owner_label, request_with_retry
 
 NOTION_API = "https://api.notion.com/v1/pages"
 NOTION_VERSION = "2022-06-28"
@@ -23,7 +23,7 @@ def _headers() -> dict:
 def _properties(item: dict) -> dict:
     props = {
         "Task": {"title": [{"text": {"content": item["task"]}}]},
-        "Owner": {"rich_text": [{"text": {"content": item["owner"]}}]},
+        "Owner": {"rich_text": [{"text": {"content": owner_label(item)}}]},
         "Priority": {"select": {"name": item["priority"]}},
     }
     if item.get("due_date"):
@@ -34,7 +34,7 @@ def _properties(item: dict) -> dict:
 def add_task(item: dict) -> dict:
     """Create one Notion row. Returns {ok, url} — url is None in dry-run."""
     if dry_run():
-        print(f"  [dry-run] Notion: would add row -> {item['task']!r} ({item['owner']})")
+        print(f"  [dry-run] Notion: would add row -> {item['task']!r} ({owner_label(item)})")
         return {"ok": True, "url": None}
 
     response = request_with_retry(

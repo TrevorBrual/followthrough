@@ -3,8 +3,7 @@ Pluggable interface to the meeting action-item extractor.
 
 INTEGRATION POINT FOR THE EXTRACTION TEAMMATE
 ----------------------------------------------
-Create a module at `extraction/extract.py` (relative to the repo root)
-exposing a function with this exact signature:
+Wired up to `src/extract.py`, which exposes this signature:
 
     def extract_actions(transcript: str, reference_date: str | None = None) -> list[dict]:
         \"\"\"Return a list of action items extracted from `transcript`.\"\"\"
@@ -23,14 +22,11 @@ Each returned dict should look like:
 passes in so relative dates like "tomorrow" or "by Friday" can be resolved
 deterministically. It may be None if no reference date is available.
 
-As soon as `extraction/extract.py` exists and defines `extract_actions`,
-this adapter will automatically use it instead of the mock below -- no
-changes needed anywhere else in the eval harness.
-
-Until then, `run_extractor` falls back to a small rule-based mock so the
-evaluation harness itself can be built, run, and demoed end-to-end. The
+If that import fails (no ANTHROPIC_API_KEY, missing deps), `run_extractor`
+falls back to the small rule-based mock below so the harness still runs. The
 mock is deliberately simple and imperfect (see limitations in eval/README.md)
--- it is NOT meant to represent real extraction quality.
+-- it is NOT real extraction quality, so check which one ran before trusting
+a pass rate.
 """
 
 from __future__ import annotations
@@ -40,14 +36,34 @@ import importlib
 import re
 from typing import Optional
 
-EXTRACTOR_MODULE = "extraction.extract"
+EXTRACTOR_MODULE = "src.extract"
 EXTRACTOR_FUNC = "extract_actions"
+
+
+_announced = False
+
+
+def active_extractor() -> str:
+    """'real' or 'mock' — which one a run is actually scoring."""
+    return "real" if _load_real_extractor() is not None else "mock"
 
 
 def run_extractor(transcript: str, reference_date: Optional[str] = None) -> list[dict]:
     """Single entry point the eval harness calls. Prefers the real extractor
     if one has been plugged in, otherwise falls back to the mock."""
+    global _announced
     real = _load_real_extractor()
+
+    if not _announced:
+        _announced = True
+        if real is None:
+            print(
+                f"WARNING: {EXTRACTOR_MODULE}.{EXTRACTOR_FUNC} did not import — "
+                "scoring the rule-based mock, NOT real extraction.\n"
+            )
+        else:
+            print(f"Using {EXTRACTOR_MODULE}.{EXTRACTOR_FUNC}\n")
+
     if real is not None:
         return real(transcript, reference_date=reference_date)
     return _mock_extract(transcript, reference_date)

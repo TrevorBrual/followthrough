@@ -58,8 +58,23 @@ python -m src.extract
 python -m eval.run_eval
 ```
 
-Runs every case in `eval/cases/*.json` through the extractor and compares the
-item count and owners against the answer key, printing a pass rate. The harness
-forces `DRY_RUN`, so evaluating never touches a real app.
+Runs the 12 cases in `eval/cases.json` through the extractor and reports a pass
+rate plus per-field accuracy for task, owner, due date and priority. The harness
+only calls the extractor, so it never touches Notion, GitHub or Slack.
+
+It prints which extractor it used on the first line. Without a working
+`ANTHROPIC_API_KEY` it falls back to a rule-based mock and says so — a pass rate
+from a mock run tells you nothing about real extraction quality.
+
+See `eval/README.md` for how cases and scoring work.
+
+### Shape the extractor returns
+
+```python
+{"task": "fix the login bug", "owner": "Sarah", "due_date": "2026-09-18", "priority": "medium"}
+```
+
+`owner` and `due_date` are `None` when the meeting didn't state one. The
+connectors show an absent owner as "Unassigned"; the data itself stays `None`.
 
 <!-- Pass rate: fill in after the eval harness is populated -->
