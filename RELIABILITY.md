@@ -3,146 +3,120 @@
 ## 1. What we evaluate
 
 The riskiest step is the first one: turning messy spoken language into structured
-action items. Everything downstream is a side effect of it — each item becomes a
-Notion row, a GitHub issue, and a line in a Slack recap. A hallucinated task
-doesn't stay a string in a JSON blob; it becomes a real issue in someone's
-tracker. So extraction is what we test.
+action items. Each item becomes a Notion row, a GitHub issue, and a line in a Slack
+recap — so a hallucinated task becomes a real issue in someone's tracker.
 
-The schema is the contract between extraction and every connector
-(`src/extract.py`, enforced as a Pydantic model):
+The schema is the contract between extraction and every connector (`src/extract.py`,
+enforced as a Pydantic model):
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `task` | `str` (required) | Imperative phrase — no owner name, no deadline or urgency wording |
-| `owner` | `str \| None` | Name as used in the transcript; `null` when nobody claimed it |
-| `due_date` | `str \| None` | ISO `YYYY-MM-DD`; `null` when the meeting set no deadline |
-| `priority` | `"high" \| "medium" \| "low"` | Constrained by the schema; defaults to `medium` |
+| `task` | `str` | Imperative phrase — no owner, deadline, or urgency wording |
+| `owner` | `str \| None` | Name as used in the transcript; `null` if unclaimed |
+| `due_date` | `str \| None` | ISO `YYYY-MM-DD`; `null` if no deadline was set |
+| `priority` | `"high" \| "medium" \| "low"` | Schema-constrained; defaults to `medium` |
 
-Nothing in `eval/` imports a connector, so scoring runs cannot write to Notion,
-GitHub, or Slack.
+Nothing in `eval/` imports a connector, so scoring never touches Notion, GitHub, or
+Slack.
 
-## 2. Evaluation methodology
+## 2. Methodology
 
-**Storage.** Two JSON files, each with a `reference_date` and a list of cases
-(`id`, `description`, `transcript`, `expected` answer key); a case may override the
-reference date, so relative-date tests are deterministic.
-
-**Running.** One scorer, both sets:
+Three JSON files hold short transcripts with hand-written answer keys and a fixed
+`reference_date`, so relative dates resolve deterministically. They cover what breaks
+naive extractors: zero action items, suggestions that aren't commitments, unowned work,
+missing deadlines, reassignments, cancellations, conditionals. One scorer runs all
+three:
 
 ```
-python -m eval.run_eval                      # dev:     eval/cases.json  (12 cases)
-python -m eval.run_eval eval/holdout.json    # holdout: eval/holdout.json (8 cases)
+python -m eval.run_eval                          # dev         (12 cases)
+python -m eval.run_eval eval/holdout.json        # holdout      (8 cases)
+python -m eval.run_eval eval/adversarial.json    # adversarial (10 cases)
 ```
 
-`eval/extractor_adapter.py` calls `src.extract.extract_actions(transcript,
-reference_date)` and prints which extractor ran on the first line. If the real one
-can't be imported it falls back to a rule-based mock and says so loudly.
+Per case we check the item count; per item, `task`, `owner`, `due_date`, `priority`.
+Text is normalized (case, punctuation, whitespace) and dates to ISO before comparison;
+task text matches on character similarity at a **0.6 threshold**. Matching is
+**order-independent** — pairs are scored by similarity and greedily assigned, never by
+array position. A case passes only if the count matches *and* every expected item
+matches on all four fields; extra items are reported as invented. **No LLM judges the
+LLM**, so scoring is deterministic and repeatable.
 
-**Checked.** Item count per case; `task`, `owner`, `due_date`, `priority` per item
-(priority only where the key specifies one). Text is lowercased,
-punctuation-stripped, whitespace-collapsed; dates are normalized to ISO from
-several formats. Task text matches on character similarity at a **0.6 threshold** —
-casing and small phrasing differences pass, a different task doesn't.
+## 3. Results
 
-**Order-independent matching.** Every (expected, actual) pair is scored by task
-similarity with a tiebreak when owners agree, then greedily assigned best-first,
-each side used once. Array position is never assumed.
+Claude Opus 5, 2026-09-13. The three sets answer different questions, never merged
+into one figure:
 
-**Pass/fail.** A case passes only if the count matches *and* every expected item
-has a match with all four fields correct. Unmatched expected items count as fully
-wrong; leftover extracted items are reported as invented. Cases are
-all-or-nothing — per-field accuracy is where partial credit shows.
+| Set | Cases | Passed | Pass rate | What it means |
+| --- | --- | --- | --- | --- |
+| dev | 12 | 12 | **100%** | **Tuned** — the prompt was written against these; a training score |
+| holdout | 8 | 8 | **100%** | **Unseen** — written after the prompt froze; the generalization signal |
+| adversarial | 10 | 8 | **80%** | **Blind** — authored independently, frozen, run once; the honest number |
 
-**No LLM judges the LLM.** Scoring is string and date comparison: free, instant,
-same verdict every time. The runner exits `0` only if every case passes, so it can
-gate CI.
+Blind per-field accuracy: task **92%**, owner **100%**, due date **92%**, priority
+**100%**.
 
-## 3. Test coverage
+**The blind set was frozen before it ran.** `eval/adversarial.json` was committed as
+blob `b1eba05b` ahead of execution, against `src/extract.py` blob `b68f60f4` — the
+answer keys provably predate the score, and the 80% is a first run, not the best of
+several. It has not been re-run; the prompt is untouched.
 
-**Dev set (12 cases)** — two clean assignments as a baseline, plus: zero action
-items; a suggestion that isn't a commitment; no explicit owner; an ambiguous owner
-("someone needs to…"); a missing due date; two tasks in one sentence; one owner
-holding several tasks; relative dates ("tomorrow", "by Friday"); a task reassigned
-later in the meeting; a filler-heavy transcript with interruptions; urgency that
-should set `priority: high`.
+### The two blind failures
 
-**Holdout set (8 cases)**, written after the prompt was frozen: a plain assignment;
-urgency with no date (must not become a `due_date`); an idea nobody picked up; work
-agreed necessary but unowned; two relative weekdays in one line; a mid-discussion
-handoff; a pure status update; one owner with three stacked tasks of mixed
-deadline and priority.
+**1. `adv_ownership_disagreement` — invented an item.** Three people argue over who
+owns the migration checklist and the chair says they'll "sort out the owner offline."
+The extractor got the checklist task right, `owner: null` included, then *also*
+emitted "Determine the owner of the migration checklist offline." Expected 1, got 2.
+Real over-extraction: process talk became a tracked task, and in production that's a
+GitHub issue nobody asked for.
 
-**20 cases, 23 expected action items.**
+**2. `adv_conditional_task` — dropped a conditional deadline.** For "if legal clears
+it by Wednesday, I'll get it countersigned the same day", it returned "Get the vendor
+contract countersigned once legal clears it" with `due_date: null`. The **due date is
+a genuine disagreement**: it read a conditional task as unscheduled, our key expected
+`2026-09-16`. Either reading is defensible; we scored against ours and took the loss.
+The **task text failure is partly our metric** — the phrasing means the same as the
+key's "countersign the vendor contract", but similarity scored 0.47 against the 0.6
+threshold. We report it as a failure rather than move the threshold afterwards.
 
-## 4. Results
+Neither is a crash or schema violation — both are judgement errors on hard input,
+which is what the set was built to find.
 
-**Current live result: not verified in this environment** — no `ANTHROPIC_API_KEY`
-and extraction dependencies unavailable, so the harness fell back to its mock.
-Before submission, run both with the configured API key:
-
-| Set | Cases | Result |
-| --- | --- | --- |
-| `eval/cases.json` (dev) | 12 | run `python -m eval.run_eval` to fill in |
-| `eval/holdout.json` (holdout) | 8 | run `python -m eval.run_eval eval/holdout.json` to fill in |
-
-Two cautions for whoever fills those in:
-
-- **`README.md` records 12/12 and 8/8** (Claude Opus 5, 2026-09-13) from the
-  extraction owner's run. That was **not reproduced here** — re-run and confirm it
-  before presenting it.
-- The dev set was used to tune the prompt, so its score is a training number. The
-  holdout set was written after the prompt was frozen — **that's the number that
-  says it generalizes.** Report them separately, never merged.
-
-For reference, the built-in mock scores **7/12 (58.3%)** dev and **3/8 (37.5%)**
-holdout. Not a product number — evidence the suite discriminates.
-
-## 5. Guardrails
-
-All present in code today:
+## 4. Guardrails
 
 - **Dry-run by default.** `DRY_RUN` defaults to `true`, read at call time; all three
-  connectors check it before any write and log "would create X". The orchestrator
-  prints `DRY RUN` or `LIVE` on every run.
-- **Structured output + schema validation.** Extraction parses into a Pydantic
+  connectors check it before any write and log "would create X" instead. Nothing
+  irreversible happens until someone flips it.
+- **Structured output with schema validation.** Extraction parses into a Pydantic
   model, so `priority` can only be `high`/`medium`/`low` and a malformed response
   fails at the boundary, not inside a connector.
-- **Retries with backoff.** Connector calls make up to 3 attempts (1s → 2s → 4s),
-  retrying timeouts, `429`s and `5xx`s. Other statuses raise immediately with the
-  response body attached, so the real cause is visible.
-- **Zero action items is a real answer.** The prompt requires an empty list over an
-  invented task, Slack posts an explicit "no action items found" recap, and four
-  eval cases assert it.
-- **Per-item, per-connector failure isolation.** Each call is wrapped individually;
-  failures are recorded as `{stage, task, error}` and the run continues. Only fully
-  succeeded items count as created, and the process exits non-zero if anything
-  failed.
-- **Extractor provenance in the report.** The harness names the extractor behind a
-  score and warns when it's the mock, so a mock run can't pass as a real one.
+- **Retries with backoff.** Connector calls make up to 3 attempts (1s → 2s → 4s) on
+  timeouts, `429`s and `5xx`s; other statuses raise immediately with the response body
+  attached.
+- **Per-item, per-connector failure isolation.** Each call is wrapped individually and
+  the run continues, so one bad row never costs the rest of the meeting. Only fully
+  succeeded items count as created; the run exits non-zero on any failure.
 
-## 6. Known limitations
+## 5. Known limitations
 
-- **20 cases is hackathon scale.** One case flipping moves a set by 8.3 points
-  (dev) or 12.5 (holdout). Directional, not statistical.
-- **Surface-level task matching.** Similarity is character-based, not semantic: a
-  correct paraphrase can fail the threshold, and a wrong task reusing the
-  transcript's wording can pass.
-- **Answer keys encode one reasonable reading.** "Urgent or merely important" is a
-  judgement a careful human would sometimes make differently.
-- **`due_date` is validated as a string, not a date** — an impossible date would
-  satisfy the schema.
-- **Untested:** unusual relative dates ("end of next quarter"), long transcripts
-  (there's no chunking), non-English and multi-meeting input.
-- **The extractor isn't deterministic even though the scorer is.** Run-to-run
+- **30 cases is hackathon scale** — one case flipping moves a set by 8-12 points.
+  Directional, not statistical.
+- **Two perfect scores are not evidence of perfection.** Dev 100% is a training
+  number by construction; 8 holdout cases is a thin basis for a generalization
+  claim. The blind 80% is the figure we'd defend.
+- **Task matching is surface-level, and answer keys encode one reasonable reading.**
+  Both cost us in blind failure 2 — a defensible paraphrase scored as wrong, and a
+  conditional deadline our key called differently than the extractor did.
+- **Untested:** long transcripts (no chunking), unusual relative dates, non-English
+  and multi-meeting input.
+- **The extractor isn't deterministic even though the scorer is** — run-to-run
   variance is not yet measured.
-- **Terminal report only** — no results written to disk, no CI workflow yet, though
-  the exit code already suits one. *(Planned.)*
 
-## 7. Reliability philosophy
+## 6. Reliability philosophy
 
-We're not claiming the agent is perfect — we're claiming we know where it breaks.
-We wanted failures to be measurable, reproducible, and visible rather than
-demonstrating one successful transcript and assuming the system works generally.
-That's why the suite includes the cases most likely to embarrass us, why dev and
-holdout are reported separately, why every failure prints its specific reason, and
-why a run scoring the mock says so in its first line.
+We're not claiming the agent is perfect — we're claiming we know where it breaks. We
+wanted failures to be measurable, reproducible, and visible rather than demonstrating
+one successful transcript and assuming the system works generally. That's why the
+hardest set was frozen in git before it ran, why its 80% sits beside the two 100%s
+instead of behind them, and why we kept a failure we think our own metric scored
+unfairly. Today's known edges: the extractor can turn process talk into a task, and it
+won't commit to a deadline that depends on a condition.
