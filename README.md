@@ -29,7 +29,17 @@ transcript ──► LLM extraction ──► JSON [{task, owner, due_date, prio
 2. `cp .env.example .env` and fill in keys:
    - `ANTHROPIC_API_KEY` — Anthropic key
    - `NOTION_API_KEY` / `NOTION_DATABASE_ID` — create an integration, share your
-     tracker database with it
+     tracker database with it, and give the database exactly these properties:
+
+     | Property | Type |
+     | --- | --- |
+     | `Task` | title |
+     | `Owner` | rich_text |
+     | `Due` | date |
+     | `Priority` | select |
+
+     Names and types both have to match — anything else is a 400 on every
+     write. Build the database to match this rather than renaming the code.
    - `GITHUB_TOKEN` / `GITHUB_REPO` — fine-grained PAT with `Issues: write` on a
      throwaway repo
    - `SLACK_WEBHOOK_URL` — an Incoming Webhook for a test channel
@@ -45,6 +55,10 @@ transcript ──► LLM extraction ──► JSON [{task, owner, due_date, prio
 python -m src.orchestrator              # uses the built-in sample transcript
 cat meeting.txt | python -m src.orchestrator
 ```
+
+Run from the repo root. `.env` is loaded relative to the repo, not your shell,
+so this works from anywhere — but the `python -m` form needs the root on the
+path.
 
 Extraction alone, to check the JSON in isolation:
 

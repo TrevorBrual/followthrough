@@ -6,6 +6,7 @@ Slack recap) consumes the shape defined here, so the schema is the contract.
 
 import json
 import os
+import pathlib
 import sys
 from datetime import date
 from typing import Literal, Optional
@@ -14,7 +15,8 @@ import anthropic
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-load_dotenv()
+# Anchored to the repo root so ANTHROPIC_API_KEY loads regardless of cwd.
+load_dotenv(pathlib.Path(__file__).resolve().parents[1] / ".env")
 
 MODEL = os.getenv("MODEL", "claude-opus-5")
 
