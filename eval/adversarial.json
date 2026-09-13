@@ -1,0 +1,86 @@
+{
+  "reference_date": "2026-09-13",
+  "cases": [
+    {
+      "id": "adv_ownership_disagreement",
+      "description": "Three people disagree about who owns the task and never resolve it; the work is still agreed to be necessary, so owner must be null rather than a guess from the surrounding names",
+      "transcript": "Priya: The migration checklist still needs writing, and it has to be done by Thursday.\nMarcus: I thought Dana picked that up last week.\nDana: No, I've got the postmortem. I assumed it was you, Marcus.\nMarcus: Honestly, I don't think either of us has it.\nPriya: Okay, we'll sort out the owner offline. It's due by Thursday regardless.",
+      "expected": [
+        {"task": "write the migration checklist", "owner": null, "due_date": "2026-09-17", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_deadline_changed_twice",
+      "description": "The deadline is renegotiated twice in the same discussion; only the final agreed date should survive",
+      "transcript": "Sam: I'll have the security audit finished by 2026-09-16.\nLena: The vendor call is that morning. Any chance you can push it?\nSam: Sure, make it 2026-09-18 then.\nLena: Hmm, the board packet actually needs it earlier than that. Could you do 2026-09-15?\nSam: Tight, but doable. 2026-09-15 it is.",
+      "expected": [
+        {"task": "finish the security audit", "owner": "Sam", "due_date": "2026-09-15", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_conditional_task",
+      "description": "A commitment gated on a condition, alongside an unconditional one in the same turn; the conditional task was still taken on and given a day, so both are action items",
+      "transcript": "Priya: Where are we on the vendor contract?\nOmar: Legal is still reviewing it. If they clear it by Wednesday, I'll get it countersigned the same day.\nPriya: Good. Either way, send me the redlines tomorrow so I can read them on the flight.\nOmar: Will do.",
+      "expected": [
+        {"task": "countersign the vendor contract", "owner": "Omar", "due_date": "2026-09-16", "priority": "medium"},
+        {"task": "send the redlines", "owner": "Omar", "due_date": "2026-09-14", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_negated_commitment",
+      "description": "The person asked explicitly declines; the task is still agreed to be needed, so it stays with owner null and must not be attributed to the person who refused it",
+      "transcript": "Priya: Marcus, can you own the customer webinar prep?\nMarcus: I can't take that one, I'm out Thursday through Monday.\nPriya: Understood. It still needs doing by 2026-09-25, so I'll find someone else.\nMarcus: Sorry, wish I could.",
+      "expected": [
+        {"task": "prep the customer webinar", "owner": null, "due_date": "2026-09-25", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_pronoun_only_reference",
+      "description": "The task is named once and then referred to only as 'it'; the deadline arrives two turns later attached to a pronoun",
+      "transcript": "Kenji: The staging database is still full of test junk from the load runs.\nNina: Yeah, I'll clear it out.\nKenji: Can you get it done before the Friday demo?\nNina: Yep, I'll have it cleaned up by then.",
+      "expected": [
+        {"task": "clear the test data out of the staging database", "owner": "Nina", "due_date": "2026-09-18", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_buried_in_noise",
+      "description": "A long, digressive standup with exactly one commitment buried in the middle; everything around it is status, banter, or discussion with no follow-up work",
+      "transcript": "Priya: Morning all. Let's keep this quick, I know it's a heavy week.\nDana: Numbers first? Signups were up four percent week over week, mostly from the referral thing.\nPriya: Nice. Churn?\nDana: Flat. Not worse, not better.\nMarcus: The p95 latency chart looks scary but it's the batch job, it's expected.\nKenji: Can confirm, it's the nightly reindex. Nothing to do there.\nDana: Did anyone else lose twenty minutes to the coffee machine this morning?\nMarcus: It ate my card.\nPriya: Facilities knows, apparently a part is on order.\nRaj: Oh, before I forget while we're all here — I'll rotate the API keys by 2026-09-17, they expire at the end of the month.\nPriya: Good catch, thanks.\nKenji: The support queue is basically empty, which is suspicious.\nDana: Enjoy it while it lasts.\nMarcus: Last thing, the design review moved to next week, no action needed from us.\nPriya: Then we're done. Short one, nice.",
+      "expected": [
+        {"task": "rotate the API keys", "owner": "Raj", "due_date": "2026-09-17", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_reassigned_owner",
+      "description": "Work already underway is handed from one person to another mid-meeting; only the new owner should appear",
+      "transcript": "Lena: I took the billing reconciliation, but I'm underwater with the audit this week.\nSam: I can pick it up if that helps.\nLena: That would help a lot. It's about half done, my notes are in the shared doc.\nPriya: Then Sam owns it now, by 2026-09-19. Lena, hand over the doc today.",
+      "expected": [
+        {"task": "finish the billing reconciliation", "owner": "Sam", "due_date": "2026-09-19", "priority": "medium"},
+        {"task": "hand over the shared doc", "owner": "Lena", "due_date": "2026-09-13", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_group_ownership",
+      "description": "A task assigned to a team rather than a person (owner null, since no individual claimed it), plus a real individual commitment in the same exchange; 'this sprint' is not a named day so it sets no due date",
+      "transcript": "Priya: The flaky CI pipeline is costing us about an hour a day.\nDana: That's engineering's to own, not ours.\nPriya: Agreed, engineering will handle it, but it does need fixing this sprint.\nDana: I'll flag it in their channel after this.",
+      "expected": [
+        {"task": "fix the flaky CI pipeline", "owner": null, "due_date": null, "priority": "medium"},
+        {"task": "flag the flaky CI pipeline in the engineering channel", "owner": "Dana", "due_date": null, "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv_suggestion_rejected",
+      "description": "An idea is floated and explicitly turned down, with the meeting stating nobody picks it up; deferring something to a later discussion is not a commitment",
+      "transcript": "Marcus: What if we rewrote the importer in Rust? The Python one is getting hard to maintain.\nPriya: No, not this quarter. We don't have the bandwidth and it isn't on fire.\nMarcus: Fair enough.\nPriya: We can revisit it at next planning, but nobody should pick it up in the meantime.\nMarcus: Understood, leaving it alone.",
+      "expected": []
+    },
+    {
+      "id": "adv_cancelled_task",
+      "description": "A task is assigned, then explicitly cancelled later in the same meeting, while a second task survives; the cancelled one must not be emitted",
+      "transcript": "Priya: Dana, can you put the investor deck together by Thursday?\nDana: On it.\nPriya: Great.\nMarcus: Quick flag, the investor meeting slipped to November.\nPriya: Oh, then scratch the investor deck, Dana. Don't spend time on it.\nDana: Okay, dropping it.\nPriya: Do finish the churn analysis by 2026-09-18 though, that one still matters.\nDana: Yep, that's on track.",
+      "expected": [
+        {"task": "finish the churn analysis", "owner": "Dana", "due_date": "2026-09-18", "priority": "medium"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "reference_date": "2026-09-13",
+  "cases": [
+    {
+      "id": "adv2_recurring_commitment",
+      "description": "A recurring commitment with a named start day; the first occurrence carries the date",
+      "transcript": "Priya: The weekly metrics email stopped going out when Raj left.\nDana: I'll take it over — I'll send it every Monday from now on, starting 2026-09-14.\nPriya: Perfect, thanks.",
+      "expected": [
+        {"task": "send the weekly metrics email", "owner": "Dana", "due_date": "2026-09-14", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_work_already_done",
+      "description": "Work completed before the meeting; past work is not an action item",
+      "transcript": "Marcus: The signup 500 is fixed. I pushed it Friday and verified on mobile Safari this morning.\nPriya: Confirmed on my side too, error rate is back to baseline.\nMarcus: So nothing outstanding there, nobody needs to pick anything up.",
+      "expected": []
+    },
+    {
+      "id": "adv2_delegation_to_absent_person",
+      "description": "Someone commits to asking an absent colleague; the owner is the person who committed, not the person who will be asked",
+      "transcript": "Priya: The firewall rules are stale and Jordan owns that system, but he's not in today.\nMarcus: I'll ask Jordan to update the firewall rules by 2026-09-18.\nPriya: Good, chase him if he goes quiet.",
+      "expected": [
+        {"task": "ask Jordan to update the firewall rules", "owner": "Marcus", "due_date": "2026-09-18", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_split_ownership",
+      "description": "One deliverable split into two separately owned pieces sharing a deadline",
+      "transcript": "Priya: The board deck needs two pieces. Sam, you write the financials section; Lena, you write the roadmap section. Both by 2026-09-17.\nSam: Got it.\nLena: Fine by me.",
+      "expected": [
+        {"task": "write the financials section", "owner": "Sam", "due_date": "2026-09-17", "priority": "medium"},
+        {"task": "write the roadmap section", "owner": "Lena", "due_date": "2026-09-17", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_deadline_never_agreed",
+      "description": "A date is proposed and explicitly not accepted; the task stands but the date must not",
+      "transcript": "Priya: Can you have the vendor comparison done by Thursday?\nOmar: I'll do it, but I can't promise Thursday — I need to see what lands from the client first.\nPriya: Okay, no firm date then, just get it done when you can.",
+      "expected": [
+        {"task": "complete the vendor comparison", "owner": "Omar", "due_date": null, "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_already_tracked_elsewhere",
+      "description": "Work already ticketed and in flight is not new work; a genuine new task in the same exchange is",
+      "transcript": "Kenji: The cache eviction bug already has a ticket and it's in this sprint, so nothing new needed from us there.\nPriya: Good. Separately, Nina, please update the runbook by 2026-09-16.\nNina: Will do.",
+      "expected": [
+        {"task": "update the runbook", "owner": "Nina", "due_date": "2026-09-16", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_blocked_no_date",
+      "description": "A committed task blocked on an external dependency with no day named anywhere",
+      "transcript": "Dana: I'll run the production rollout, but I can't start until legal signs off, and they haven't given me a date.\nPriya: Understood, no deadline from you yet then.\nDana: Right, I'll flag it the moment they clear it.",
+      "expected": [
+        {"task": "run the production rollout", "owner": "Dana", "due_date": null, "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_retracted_volunteer",
+      "description": "Someone volunteers and withdraws the offer in the same breath; only the surviving commitment counts",
+      "transcript": "Marcus: I'll take the load testing — actually, hold on. Let me not commit to that until I've seen the capacity numbers. I'm not picking it up today.\nPriya: Fine, we'll revisit next week.\nKenji: I'll update the status page by 2026-09-15 either way.\nPriya: Thanks.",
+      "expected": [
+        {"task": "update the status page", "owner": "Kenji", "due_date": "2026-09-15", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_date_that_is_not_a_deadline",
+      "description": "Historical dates sit next to the real deadline; only the deadline belongs in due_date",
+      "transcript": "Priya: For the record, the outage started 2026-09-02 and ran until 2026-09-03.\nKenji: Longer than it felt.\nPriya: Kenji, write the postmortem by 2026-09-19 please.\nKenji: Yep, I'll have it in the shared drive.",
+      "expected": [
+        {"task": "write the postmortem", "owner": "Kenji", "due_date": "2026-09-19", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "adv2_role_not_person_low_priority",
+      "description": "A job title mentioned near the task is not an owner, and explicit nice-to-have framing sets low priority",
+      "transcript": "Priya: We should document the escalation path — the on-call engineer has nowhere to look at 3am right now.\nDana: Worth doing.\nPriya: It's a nice-to-have though, low priority, and nobody's assigned to it yet.\nDana: Agreed, not urgent.",
+      "expected": [
+        {"task": "document the escalation path", "owner": null, "due_date": null, "priority": "low"}
+      ]
+    }
+  ]
+}
