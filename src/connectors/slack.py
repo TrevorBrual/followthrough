@@ -2,7 +2,7 @@
 
 import os
 
-from ._common import dry_run, request_with_retry
+from ._common import dry_run, owner_label, request_with_retry
 
 
 def _format(items: list[dict]) -> str:
@@ -12,7 +12,7 @@ def _format(items: list[dict]) -> str:
     lines = [f"*Meeting recap:* {len(items)} action item(s) created."]
     for item in items:
         due = item.get("due_date") or "no deadline"
-        lines.append(f"• {item['task']} — {item['owner']} ({due}, {item['priority']})")
+        lines.append(f"• {item['task']} — {owner_label(item)} ({due}, {item['priority']})")
     return "\n".join(lines)
 
 

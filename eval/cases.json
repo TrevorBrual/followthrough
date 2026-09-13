@@ -1,0 +1,102 @@
+{
+  "reference_date": "2026-09-13",
+  "cases": [
+    {
+      "id": "clear_two_tasks",
+      "description": "Two clearly assigned action items with explicit owners and dates",
+      "transcript": "Alright team, let's wrap up. Sarah will fix the login bug by 2026-09-18. John will update the API documentation by 2026-09-20. Great meeting everyone.",
+      "expected": [
+        {"task": "fix the login bug", "owner": "Sarah", "due_date": "2026-09-18", "priority": "medium"},
+        {"task": "update the API documentation", "owner": "John", "due_date": "2026-09-20", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "no_action_items",
+      "description": "A transcript with zero action items",
+      "transcript": "Thanks for joining everyone. We just wanted to give a status update. Things are on track and there's nothing new to report this week. See you next time.",
+      "expected": []
+    },
+    {
+      "id": "no_explicit_owner",
+      "description": "An action item stated without an explicit owner",
+      "transcript": "Before we close out, the server needs to be restarted by 2026-09-19. Let's make sure that happens.",
+      "expected": [
+        {"task": "restart the server", "owner": null, "due_date": "2026-09-19", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "no_due_date",
+      "description": "An action item with no due date mentioned",
+      "transcript": "One more thing, Priya will review the onboarding guide. No specific deadline for that one.",
+      "expected": [
+        {"task": "review the onboarding guide", "owner": "Priya", "due_date": null, "priority": "medium"}
+      ]
+    },
+    {
+      "id": "two_tasks_one_sentence",
+      "description": "Two distinct action items packed into a single sentence",
+      "transcript": "To close the loop, Sarah will update the docs and John will review the pull request, both by 2026-09-17.",
+      "expected": [
+        {"task": "update the docs", "owner": "Sarah", "due_date": "2026-09-17", "priority": "medium"},
+        {"task": "review the pull request", "owner": "John", "due_date": "2026-09-17", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "one_owner_multiple_tasks",
+      "description": "A single person owning multiple separate action items",
+      "transcript": "Mike, can you take two things? Mike will migrate the database by 2026-09-21. Mike will also write the migration runbook by 2026-09-23.",
+      "expected": [
+        {"task": "migrate the database", "owner": "Mike", "due_date": "2026-09-21", "priority": "medium"},
+        {"task": "write the migration runbook", "owner": "Mike", "due_date": "2026-09-23", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "relative_dates",
+      "description": "Action items expressed with relative dates instead of explicit ones",
+      "transcript": "Quick one before we go. Jordan will send the client the proposal tomorrow. Also, Alex will finish the budget review by Friday.",
+      "reference_date": "2026-09-13",
+      "expected": [
+        {"task": "send the client the proposal", "owner": "Jordan", "due_date": "2026-09-14", "priority": "medium"},
+        {"task": "finish the budget review", "owner": "Alex", "due_date": "2026-09-18", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "suggestion_not_action",
+      "description": "A suggestion or idea that should NOT be treated as an assigned action item",
+      "transcript": "Maybe at some point we could look into switching hosting providers, just something to think about. Anyway, that's all for today, nothing else to assign.",
+      "expected": []
+    },
+    {
+      "id": "corrected_action_item",
+      "description": "An action item that gets reassigned/corrected later in the same meeting",
+      "transcript": "Bob will handle the deployment on Friday. Actually wait, Bob is out that day, so Alice will handle the deployment instead, by 2026-09-18.",
+      "expected": [
+        {"task": "handle the deployment", "owner": "Alice", "due_date": "2026-09-18", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "messy_transcript",
+      "description": "Filler words, interruptions, and conversational noise around a real action item",
+      "transcript": "Okay so, um, yeah, like I was saying -- sorry, go ahead -- no you go -- okay um, so basically, Dana will, uh, fix the checkout flow bug, like, by 2026-09-22, if that works for everyone.",
+      "expected": [
+        {"task": "fix the checkout flow bug", "owner": "Dana", "due_date": "2026-09-22", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "ambiguous_owner",
+      "description": "The transcript implies someone should own a task but never names a specific person",
+      "transcript": "Someone needs to look into the flaky test failures before the next release. It's been happening for a week now.",
+      "expected": [
+        {"task": "look into the flaky test failures", "owner": null, "due_date": null, "priority": "medium"}
+      ]
+    },
+    {
+      "id": "urgent_priority",
+      "description": "An action item with explicit urgency language that should map to high priority",
+      "transcript": "This is urgent, Sam needs to restart the payment service ASAP, this can't wait until tomorrow.",
+      "expected": [
+        {"task": "restart the payment service", "owner": "Sam", "due_date": null, "priority": "high"}
+      ]
+    }
+  ]
+}

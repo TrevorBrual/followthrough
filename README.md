@@ -29,7 +29,17 @@ transcript ──► LLM extraction ──► JSON [{task, owner, due_date, prio
 2. `cp .env.example .env` and fill in keys:
    - `ANTHROPIC_API_KEY` — Anthropic key
    - `NOTION_API_KEY` / `NOTION_DATABASE_ID` — create an integration, share your
-     tracker database with it
+     tracker database with it, and give the database exactly these properties:
+
+     | Property | Type |
+     | --- | --- |
+     | `Task` | title |
+     | `Owner` | rich_text |
+     | `Due` | date |
+     | `Priority` | select |
+
+     Names and types both have to match — anything else is a 400 on every
+     write. Build the database to match this rather than renaming the code.
    - `GITHUB_TOKEN` / `GITHUB_REPO` — fine-grained PAT with `Issues: write` on a
      throwaway repo
    - `SLACK_WEBHOOK_URL` — an Incoming Webhook for a test channel
@@ -46,6 +56,10 @@ python -m src.orchestrator              # uses the built-in sample transcript
 cat meeting.txt | python -m src.orchestrator
 ```
 
+Run from the repo root. `.env` is loaded relative to the repo, not your shell,
+so this works from anywhere — but the `python -m` form needs the root on the
+path.
+
 Extraction alone, to check the JSON in isolation:
 
 ```
@@ -58,8 +72,23 @@ python -m src.extract
 python -m eval.run_eval
 ```
 
-Runs every case in `eval/cases/*.json` through the extractor and compares the
-item count and owners against the answer key, printing a pass rate. The harness
-forces `DRY_RUN`, so evaluating never touches a real app.
+Runs the 12 cases in `eval/cases.json` through the extractor and reports a pass
+rate plus per-field accuracy for task, owner, due date and priority. The harness
+only calls the extractor, so it never touches Notion, GitHub or Slack.
+
+It prints which extractor it used on the first line. Without a working
+`ANTHROPIC_API_KEY` it falls back to a rule-based mock and says so — a pass rate
+from a mock run tells you nothing about real extraction quality.
+
+See `eval/README.md` for how cases and scoring work.
+
+### Shape the extractor returns
+
+```python
+{"task": "fix the login bug", "owner": "Sarah", "due_date": "2026-09-18", "priority": "medium"}
+```
+
+`owner` and `due_date` are `None` when the meeting didn't state one. The
+connectors show an absent owner as "Unassigned"; the data itself stays `None`.
 
 <!-- Pass rate: fill in after the eval harness is populated -->

@@ -1,3 +1,6 @@
-anthropic
-python-dotenv
-requests
+# Pinned so everyone resolves the same versions. extract.py uses
+# messages.parse(), which older anthropic releases don't have.
+anthropic==1.5.0
+pydantic==2.13.5
+python-dotenv==1.2.3
+requests==2.33.1
