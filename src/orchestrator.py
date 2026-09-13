@@ -20,7 +20,7 @@ def run(transcript: str) -> dict:
     items = extract(transcript)
     print(f"Extracted {len(items)} action item(s).\n")
 
-    created, failures = [], []
+    created, dropped, failures = [], [], []
     for item in items:
         print(f"- {item['task']}")
         item_ok = True
@@ -31,17 +31,16 @@ def run(transcript: str) -> dict:
                 item_ok = False
                 failures.append({"stage": name, "task": item["task"], "error": str(exc)})
                 print(f"  [error] {name}: {exc}")
-        if item_ok:
-            created.append(item)
+        (created if item_ok else dropped).append(item)
 
     try:
-        post_recap(created)
+        post_recap(created, failed=len(dropped))
     except Exception as exc:
         failures.append({"stage": "slack", "task": None, "error": str(exc)})
         print(f"  [error] slack: {exc}")
 
-    print(f"\nDone. {len(created)} created, {len(failures)} failure(s).")
-    return {"items": items, "created": created, "failures": failures}
+    print(f"\nDone. {len(created)} created, {len(dropped)} dropped, {len(failures)} failure(s).")
+    return {"items": items, "created": created, "dropped": dropped, "failures": failures}
 
 
 if __name__ == "__main__":
