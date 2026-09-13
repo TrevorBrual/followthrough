@@ -16,12 +16,12 @@ transcript ──► LLM extraction ──► JSON [{task, owner, due_date, prio
 
 | Piece | File | Owner |
 | --- | --- | --- |
-| LLM extraction + JSON schema | `src/extract.py` | Integrator A |
-| `add_task(item)` → Notion | `src/connectors/notion.py` | Integrator B |
-| `create_issue(item)` → GitHub | `src/connectors/github.py` | Integrator B |
-| `post_recap(items)` → Slack | `src/connectors/slack.py` | Integrator B |
+| LLM extraction + JSON schema | `src/extract.py` | Carl |
+| `add_task(item)` → Notion | `src/connectors/notion.py` | Trevor |
+| `create_issue(item)` → GitHub | `src/connectors/github.py` | Trevor |
+| `post_recap(items)` → Slack | `src/connectors/slack.py` | Trevor |
 | Glue | `src/orchestrator.py` | shared |
-| Test transcripts + pass rate | `eval/` | Reliability lead |
+| Test transcripts + pass rate | `eval/` | Michali |
 
 ## Setup
 
