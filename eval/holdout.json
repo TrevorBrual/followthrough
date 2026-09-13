@@ -1,0 +1,68 @@
+{
+  "reference_date": "2026-09-13",
+  "cases": [
+    {
+      "id": "holdout_plain_assignment",
+      "description": "Straightforward assignment with an explicit date",
+      "transcript": "Last item. Raj is going to draft the Q3 roadmap by 2026-09-25 so we can review it at the offsite.",
+      "expected": [
+        {"task": "draft the Q3 roadmap", "owner": "Raj", "due_date": "2026-09-25", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "holdout_urgency_no_date",
+      "description": "Urgency language with no date stated — must not become a due_date",
+      "transcript": "Drop everything on this one. Lena has to roll back the deploy right now, the error rate is through the roof.",
+      "expected": [
+        {"task": "roll back the deploy", "owner": "Lena", "due_date": null, "priority": "high"}
+      ]
+    },
+    {
+      "id": "holdout_idea_not_task",
+      "description": "A floated idea nobody committed to",
+      "transcript": "We might want to revisit the pricing page at some point, it's been a while. Just a thought, not asking anyone to pick it up. Okay, that's time.",
+      "expected": []
+    },
+    {
+      "id": "holdout_unowned_needed",
+      "description": "Work the meeting agrees is necessary but assigns to nobody",
+      "transcript": "One risk before we wrap: the SSL cert has to be renewed before it lapses next month, or the whole site goes down.",
+      "expected": [
+        {"task": "renew the SSL cert", "owner": null, "due_date": null, "priority": "medium"}
+      ]
+    },
+    {
+      "id": "holdout_relative_weekday",
+      "description": "Relative weekday resolved against the reference date",
+      "transcript": "Omar will send out the vendor invoices by Wednesday, and Nina will chase the signed contract by Friday.",
+      "expected": [
+        {"task": "send out the vendor invoices", "owner": "Omar", "due_date": "2026-09-16", "priority": "medium"},
+        {"task": "chase the signed contract", "owner": "Nina", "due_date": "2026-09-18", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "holdout_handoff",
+      "description": "Task handed from one person to another mid-discussion",
+      "transcript": "Priya, can you handle the customer migration? Actually, hold on, you're on support rotation. Marcus, can you take it instead? Marcus: yeah, I'll get it done by 2026-09-19.",
+      "expected": [
+        {"task": "handle the customer migration", "owner": "Marcus", "due_date": "2026-09-19", "priority": "medium"}
+      ]
+    },
+    {
+      "id": "holdout_status_only",
+      "description": "Pure status update with no follow-up work",
+      "transcript": "Quick round of updates. The API migration finished Tuesday. Support tickets are down 12%. Nothing blocked, nothing needed from anyone. Good week.",
+      "expected": []
+    },
+    {
+      "id": "holdout_stacked_tasks",
+      "description": "One owner, three tasks, mixed deadlines",
+      "transcript": "Kenji, you've got a few: write the incident postmortem by 2026-09-17, add the alerting rule, and when you get a spare moment sometime, tidy up the old dashboards. That last one's low priority, whenever.",
+      "expected": [
+        {"task": "write the incident postmortem", "owner": "Kenji", "due_date": "2026-09-17", "priority": "medium"},
+        {"task": "add the alerting rule", "owner": "Kenji", "due_date": null, "priority": "medium"},
+        {"task": "tidy up the old dashboards", "owner": "Kenji", "due_date": null, "priority": "low"}
+      ]
+    }
+  ]
+}
