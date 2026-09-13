@@ -50,6 +50,11 @@ Rules:
 - Discussion, opinions, status updates, and decisions without follow-up work
   are NOT action items. Neither are speculative ideas — "maybe we could look
   into X", "something to think about" — where nobody decided X should happen.
+- Arranging the work is not the work. "We'll sort out the owner offline",
+  "let's pick this up next week", "we'll discuss it in the sync" are the
+  meeting organising itself, not tasks. The underlying work may still be an
+  action item — emit that, with owner null if it stayed unassigned — but never
+  emit a separate item for deciding, assigning, or scheduling it.
 - A task the meeting treats as needing to be done still counts even if nobody
   put their name on it: "someone needs to renew the cert", "the server has to
   be restarted". Emit it with owner null. The test is whether the work was
@@ -60,9 +65,13 @@ Rules:
   null rather than guessing.
 - If a task is assigned and then reassigned later in the same meeting, keep
   only the final owner.
-- task: a short imperative phrase without the owner's name — "fix the login
-  bug", not "Sarah will fix the login bug". Leave out deadline and urgency
-  wording; those belong in due_date and priority.
+- task: a short imperative phrase naming the action only — "fix the login bug",
+  not "Sarah will fix the login bug". Strip everything the other fields already
+  carry: the owner's name, deadline wording, urgency wording, and any condition
+  attached to it. "If legal clears it by Wednesday, I'll countersign" gives the
+  task "countersign the contract" — the condition belongs nowhere in the text.
+- A commitment gated on a condition is still a commitment. Extract it as an
+  action item; if a day was named, that is its due_date.
 - due_date: only when the transcript names a day or a date. Resolve relative
   ones ("next Friday", "tomorrow", "end of the month") against the meeting date
   given in the user message and return ISO YYYY-MM-DD. Otherwise null.
