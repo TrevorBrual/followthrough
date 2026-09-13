@@ -91,4 +91,28 @@ See `eval/README.md` for how cases and scoring work.
 `owner` and `due_date` are `None` when the meeting didn't state one. The
 connectors show an absent owner as "Unassigned"; the data itself stays `None`.
 
-<!-- Pass rate: fill in after the eval harness is populated -->
+### Current results
+
+Claude Opus 5, measured 2026-09-13:
+
+| Set | Cases | Pass rate |
+| --- | --- | --- |
+| `eval/cases.json` | 12 | 12/12 (100%) |
+| `eval/holdout.json` | 8 | 8/8 (100%) |
+
+Per-field accuracy is 100% on both for task, owner, due date and priority.
+
+The honest caveat: the prompt was tuned against `cases.json`, so that 12/12 is a
+training score. `holdout.json` is 8 transcripts written after the prompt was
+frozen and never used to tune it — that 8/8 is the number that says it
+generalizes. Run both:
+
+```
+python -m eval.run_eval
+python -m eval.run_eval eval/holdout.json
+```
+
+Known limits: 20 cases is a small sample, every case is English and
+single-meeting, and the answer keys encode one reasonable reading of each
+transcript — "is this urgent or just important" is a judgement call a human
+would sometimes make differently.

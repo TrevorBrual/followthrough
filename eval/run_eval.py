@@ -22,11 +22,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from eval.evaluator import CaseResult, FieldTally, evaluate_case
 from eval.extractor_adapter import run_extractor
 
-CASES_PATH = Path(__file__).resolve().parent / "cases.json"
+DEFAULT_CASES_PATH = Path(__file__).resolve().parent / "cases.json"
+
+
+def cases_path() -> Path:
+    """Optional argv override so the same scorer can run the held-out set:
+    python -m eval.run_eval eval/holdout.json"""
+    return Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_CASES_PATH
 
 
 def load_cases() -> dict:
-    with open(CASES_PATH, "r", encoding="utf-8") as f:
+    with open(cases_path(), "r", encoding="utf-8") as f:
         return json.load(f)
 
 
