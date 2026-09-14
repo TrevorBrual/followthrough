@@ -20,6 +20,12 @@ code, so treat any single pass rate as a sample rather than a measurement.
 **[RELIABILITY.md](RELIABILITY.md)** has the methodology, both documented
 failure cases, the guardrails, and what we think this does not prove.
 
+## Demo
+
+[![Watch the demo video](https://github.com/user-attachments/assets/dd73666c-beaf-40af-8a3d-708e53aeb992)](https://drive.google.com/file/d/1urm3ibiggba67GfvxTOpK_YilGcWSQ3O/view?usp=sharing)
+
+▶️ [Watch the demo video](https://drive.google.com/file/d/1urm3ibiggba67GfvxTOpK_YilGcWSQ3O/view?usp=sharing)
+
 ## Architecture
 
 ```
