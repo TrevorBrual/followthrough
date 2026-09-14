@@ -2,6 +2,24 @@
 
 Turning raw meeting transcript into completed action items across Notion, GitHub, and Slack, with a dry-run mode and an eval harness that reports a live pass rate.
 
+## How well does it work?
+
+Extraction is the step everything downstream trusts, so it is the step we
+measured. Three separate sets, reported separately because they answer
+different questions:
+
+| Set | Cases | Result | What it tells you |
+| --- | --- | --- | --- |
+| dev | 12 | 12/12 | Tuned against these. A training score. |
+| holdout | 8 | 8/8 | Written after the prompt froze. |
+| blind | 10 | 8-9/10 | Frozen in git before it ever ran. |
+
+The blind number is the one that counts, and it moves between runs on identical
+code, so treat any single pass rate as a sample rather than a measurement.
+
+**[RELIABILITY.md](RELIABILITY.md)** has the methodology, both documented
+failure cases, the guardrails, and what we think this does not prove.
+
 ## Architecture
 
 ```
